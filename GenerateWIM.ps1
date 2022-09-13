@@ -5,6 +5,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 # Includes
 . ".\inc\Log.ps1"
 . ".\inc\AddDriversToWIM.ps1"
+. ".\inc\AddPostinstallToWIM.ps1"
 . ".\inc\AddUpdatesToWIM.ps1"
 . ".\inc\ConfigureWinPEConsole.ps1"
 . ".\inc\ConvertArchitectureIdToString.ps1"
@@ -25,35 +26,17 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 . ".\inc\PrepareWinPEWIM.ps1"
 . ".\inc\SetWinPETargetPath.ps1"
 . ".\inc\FetchLatestOpenSSH.ps1"
-
-Write-Host "             ▒       ▒                                                                                                  
-          ▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒▒▒                                                                                             
-        ▒▓▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▓▓▒                                                                                          
-       ▓▒▒▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒         ▒▒▒    ▒▒▒▒▒    ▒▒▒  ▒▒▒    ▒▒▒▒     ▒▒▒▒▒                                      
-      ▓▓▒▒▓▒▒▒▒▓▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒        ▒▒▒    ▒▒▒▒▒   ▒▒▒▒  ▒▒▒    ▒▒▒▒▒    ▒▒▒▒▒                                      
-     ▒▓▒▒▓▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓         ▒▒▒   ▒▒▒▒▒   ▒▒▒   ▒▒▒    ▒▒▒▒▒   ▒▒▒▒▒▒    ▒▓▓▓▓▓▒    ▒▓▓ ▒▓▓▓▒              
-     █▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓         ▒▒▒  ▒▒▒ ▒▒▒  ▒▒▒   ▒▒▒    ▒▒▒▒▒▒  ▒▒▒▒▒▒   ▓███▓████   ▓████▓████             
-    ▒█▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒        ▒▒▒▒ ▒▒▒ ▒▒▒ ▒▒▒    ▒▒▒    ▒▒ ▒▒▒ ▒▒▒ ▒▒▒   ▒▒▒   ███   ▓██▓   ███             
-    ▒▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓         ▒▒▒▒▒▒   ▒▒▒▒▒▒    ▒▒▒    ▒▒  ▒▒▒▒▒▒ ▒▒▒    ▓▓██████   ▓██▒   ███             
-    ▓▓▓█▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓██▓        ▒▒▒▒▒▒   ▒▒▒▒▒▒    ▒▒▒    ▒▒  ▒▒▒▒▒  ▒▒▒  ▒███▒  ███   ▓██▒   ███             
-   ▒▓▒██▒▓█▓▓▓▓▓▒▒▒▒▒▒▒▒▒▓▓▓▓█▓▓▒▒▒▒       ▒▒▒▒     ▒▒▒▒     ▒▒▒    ▒▒   ▒▒▒▒  ▒▒▒  ▒███  ▓███   ▓██▒   ███             
-    ▒▓▓▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▓▒       ▒▒▒▒     ▒▒▒▒     ▒▒▒    ▒▒   ▒▒▒   ▒▒▒   ▓█████▓██▒  ▓██▒   ███             
-       ▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒                                                                                       
-          ▒▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▓▓▒▒                                                                                          
-                ▒▒▒▒▒▒▒▒                                                                                                
-"                                                      
+                                            
 
 # MAIN starts here!
-$isAdmin = ([Security.Principal.WindowsPrincipal] `
-  [Security.Principal.WindowsIdentity]::GetCurrent() `
-).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
+$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+Write-Host $isAdmin
 if ($isAdmin -eq $true) {
     DetectAndInstallWAIK
     DownloadLatestOpenSSHServer
 
     $folder = New-Item -Force -ItemType directory -Path $tempfolder
-    $folder.Attributes += 'HIDDEN'
+    $folder.Attributes += "HIDDEN"
 
     $list_isos = Get-ChildItem -Path "$sourcesfolder\*\*\*.iso"
 
@@ -73,9 +56,5 @@ if ($isAdmin -eq $true) {
 
     Write-Host "All Done!"
 } else {
-    Write-Host -ForegroundColor red -BackgroundColor Black "╔════════════════════════════════════════════════════════════╗"
-    Write-Host -ForegroundColor red -BackgroundColor Black "║                Not running as administrator                ║"
-    Write-Host -ForegroundColor red -BackgroundColor Black "╟────────────────────────────────────────────────────────────╢"
-    Write-Host -ForegroundColor red -BackgroundColor Black "║ please run this script in an elevated powershell instance! ║"
-    Write-Host -ForegroundColor red -BackgroundColor Black "╚════════════════════════════════════════════════════════════╝"
+    Write-Host -ForegroundColor red -BackgroundColor Black "please run this script in an elevated powershell instance!"
 }

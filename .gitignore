@@ -7,3 +7,5 @@ drivers/
 winpe/images
 **/*.wim
 *.log
+*.exe
+*.zip

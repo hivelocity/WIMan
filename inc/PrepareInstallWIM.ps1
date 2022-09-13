@@ -9,6 +9,8 @@ function PrepareInstallWIM($iso, $outputfolder) {
 	Log "DEBUG" "Destinationfolder: $destinationfolder"
     $installwim = $tempfolder + $sourcefolder + '\sources\install.wim'
 	Log "DEBUG" "Original WIM: $installwim"
+	$postinstallfolder = $sourcefolder + '\Setup'
+	Log "DEBUG" "Postinstall Directory: $postinstallfolder"
 
     $metaData = ExtractXMLFromWIM $installwim
 	$amountOfImages = $metaData.WIM.IMAGE.Length
@@ -51,6 +53,15 @@ function PrepareInstallWIM($iso, $outputfolder) {
         if (ExtractWIM $installwim $imageIndex) {
 			Log "INFO" "Successfully extracted [$imageIndex/$amountOfImages] $imageName"
             Write-Host "OK" -ForegroundColor Green
+			
+			Log "INFO" "Copying Postinstall..."
+			if (AddPostinstallToWIM $installwim $postinstallfolder ) {
+				Log "INFO" "Successfully added postinstall"
+				Write-Host "OK" -ForegroundColor Green
+			} else {
+				Log "ERROR" "Failed to add postinstall"
+				Write-Host "Failed" -ForegroundColor Red
+			}
 
 			Log "INFO" "Adding drivers..."
             Write-Host "`t`tAdding drivers... " -ForegroundColor White -NoNewLine
